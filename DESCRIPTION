@@ -1,0 +1,13 @@
+Package: evacure
+Title: Evaluate Prognostic accuracy for mixture cure models
+Version: 0.0.0.9000
+Authors@R: person("Yilong", "Zhang", , "elong0527@gmail.com", role = c("aut", "cre"))
+Description: Calcuate concordance probabilities for mixture cure models
+Depends:
+    R (>= 3.1.1)
+LazyData: true
+Imports:
+    smcure,
+    Rcpp,
+    RcppEigen,
+RoxygenNote: 5.0.1
