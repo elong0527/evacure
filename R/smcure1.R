@@ -9,12 +9,11 @@ smcure1 <-
   function(formula,cureform,offset=NULL,data,na.action=na.omit,model= c("aft", "ph"),link="logit", Var=TRUE,emmax=50,eps=1e-7,nboot=100,
            init = NULL, em = "smcure1", cutpoint = c(0.1,0.25,0.5,0.75,0.9), eva_model = NULL)
   {
-    library(smcure)
-    if(em == "smcure") {
-      print("smcure:::em")
-      em <- smcure:::em }else{
-        print("revised em")
-      }
+    # if(em == "smcure") {
+    #   print("smcure:::em")
+    #   em <- smcure:::em }else{
+    #     print("revised em")
+    #   }
 
     if(model == "ph"){
       eva_model = "PH"
