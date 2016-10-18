@@ -1,7 +1,10 @@
 evacure
 =========
 
-An R package for evaluating prognostic accuracy for mixture cure models
+An R package for evaluating prognostic accuracy for mixture cure models.
+
+The paper to descrbied the method is avaliable on arXiv:
+[Wang, B., Zhang, Y., Sun, W., & Fang, Y. (2016). Sparse Convex Clustering. arXiv preprint arXiv:1601.04586.](https://arxiv.org/abs/1601.04586)
 
 ## Installation ##
 
