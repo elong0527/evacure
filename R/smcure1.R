@@ -19,6 +19,7 @@ smcure1 <-
       eva_model = "PH"
     }
 
+
     call <- match.call()
     model <- match.arg(model)
     cat("Program is running..be patient...")
@@ -165,6 +166,26 @@ smcure1 <-
 #     printsmcure(fit,Var)
   }
 
+#' Rank function
+#'
+#' Rank estimating equation used in the M-step of the EM algorithm for the AFT mixture cure model.
+#'
+#' @param beta unknown parameters corresponding to latency part
+#' @param Time time to event of interest
+#' @param X a vector or matrix of covariates corresponding to latency part
+#' @param n total number of observations
+#' @param w conditional probability of the individual remaining uncured
+#' @param Status censoring indicator, 1=event of interest happens, and 0=censoring
+smrank <- function (beta, Time, X, n, w, Status)
+{
+  error <- drop(log(Time) - beta %*% t(X))
+  tp <- numeric()
+  for (i in 1:n) {
+    tp[i] <- sum(as.numeric((error[i] - error) < 0) * abs(error[i] -
+                                                            error) * w * Status[i])
+  }
+  sum(tp)/n
+}
 
 #' Evaluate Mixture cure model fitted by smcure
 #'

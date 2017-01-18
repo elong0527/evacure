@@ -65,7 +65,9 @@ sen.spe.cure <- function(odds, risk, surv, delta, cut.point = NULL, verbose = T)
     plot(roc, xlim = c(0,1), xlab = "1 - Specificity", ylab = "Sensitivity", main = "ROC curve" )
   }
 
+  options(warn=-1)
   res <- cbind(sen, spe, cut = c(min(odds.o) - 1, unique(odds.o) ) )
+  options(warn=0)
 
   if(! is.null(cut.point) ){
     res <- cut.senspe(res, cut.point)
