@@ -19,6 +19,9 @@ smcure1 <-
       eva_model = "PH"
     }
 
+    if(model == "aft" & is.null(eva_model) ){
+      stop("eva_model is required to calculate prognostic accuracy for AFT modeld")
+    }
 
     call <- match.call()
     model <- match.arg(model)
