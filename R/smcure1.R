@@ -15,6 +15,8 @@ smcure1 <-
     #     print("revised em")
     #   }
 
+    options(warn=-1)
+
     if(model == "ph"){
       eva_model = "PH"
     }
@@ -104,11 +106,13 @@ smcure1 <-
 
         if(model=="ph"){
           eva.boot[[i]] <- eva_cure(bootdata[,1],bootdata[,2],bootX[,-1],bootfit$latencyfit,bootZ,bootfit$b, bootfit$Survival, model = "PH")
-          eva.boot[[i]]$sensep <- cutSenspe(eva.boot[[i]]$sensep, cutpoint )
+          eva.boot[[i]]$sensep <- eva.boot[[i]]$sensep
+          eva.boot[[i]]$eva <- cutSenspe(eva.boot[[i]]$sensep, cutpoint )
         }
         if(model=="aft"){
           eva.boot[[i]] <- eva_cure(bootdata[,1],bootdata[,2],bootX, - bootfit$latencyfit,bootZ,bootfit$b, bootfit$Survival, model = eva_model)
-          eva.boot[[i]]$sensep <- cutSenspe(eva.boot[[i]]$sensep, cutpoint )
+          eva.boot[[i]]$sensep <- eva.boot[[i]]$sensep
+          eva.boot[[i]]$eva <- cutSenspe(eva.boot[[i]]$sensep, cutpoint )
         }
 
         if (bootfit$tau<eps) i<-i+1}
@@ -120,7 +124,7 @@ smcure1 <-
 
 
       res_boot <- do.call(rbind, lapply(eva.boot, function(x)
-        tmp <- c(x$metric, sen = x$sensep[,1], sep = x$sensep[,2]) ) )
+        tmp <- c(x$metric, sen = x$eva[,1], sep = x$eva[,2]) ) )
       eva_sd <- apply(res_boot, 2, function(x) c( mean = mean(x), sd = sd(x), quantile(x, c(0.025, 0.975))) )
 
     }
@@ -139,12 +143,12 @@ smcure1 <-
 
     if(Var){
       fit$b_var <- b_var
-      fit$b_sd <- b_sd
-      fit$b_zvalue <- fit$b/b_sd
+      fit$b_sd <- sqrt(b_var)
+      fit$b_zvalue <- fit$b/fit$b_sd
       fit$b_pvalue <- (1-pnorm(abs(fit$b_zvalue)))*2
       fit$beta_var <- beta_var
-      fit$beta_sd <- beta_sd
-      fit$beta_zvalue <- fit$beta/beta_sd
+      fit$beta_sd <- sqrt(beta_var)
+      fit$beta_zvalue <- fit$beta/fit$beta_sd
       fit$beta_pvalue <- (1-pnorm(abs(fit$beta_zvalue)))*2
       fit$b_boot <- b_boot
       fit$beta_boot <- beta_boot
@@ -165,6 +169,8 @@ smcure1 <-
       fit$metric <- eva$metric
       fit$sensep <- eva$sensep
     }
+    options(warn=0)
+
     fit
 #     printsmcure(fit,Var)
   }
@@ -227,6 +233,7 @@ eva_cure <- function(time,delta,X,beta,Z,b, surv, model, baseline = T){
 #' @export
 printsmcure1 <- function(x, Var = TRUE, ROC = TRUE, ...)
 {
+  library(plyr)
   if (is.null(Var))
     Var = TRUE
   if (!is.null(cl <- x$call)) {
@@ -275,12 +282,13 @@ printsmcure1 <- function(x, Var = TRUE, ROC = TRUE, ...)
     }
   }
   if (Var){
-    ci <- apply(x$metric.boot, 2, quantile, probs = c(0.025, 0.975))
+    metric.boot <- sapply(x$eva.boot, function(x) x$metric)
+    ci <- apply(metric.boot, 1, quantile, probs = c(0.025, 0.975))
     metric <- cbind(x$metric, t(ci))
     colnames(metric)[1] <- c("Estimate")
     if(ROC){
-      library(plyr)
-      sensep.res <- lapply(x$sensep.boot,
+      sensep.boot <- lapply(x$eva.boot, function(x) x$sensep)
+      sensep.res <- lapply(sensep.boot,
                            function( sensep ){
                              cutpoints <- seq(0,1-1e-5,length = 100)
                              cutSenspe(sensep, cutpoints)
@@ -290,11 +298,11 @@ printsmcure1 <- function(x, Var = TRUE, ROC = TRUE, ...)
       sensep.res <- do.call(rbind, sensep.res)
       rownames(sensep.res) <- NULL
       sensep.res <- data.frame(type, sensep.res)
-      sen.ci <- ddply(sensep.res, .(type), function(res) c( quantile(res$sen, c(0.025, 0.975)), quantile(res$spe, 0.5 ) ) )
+      sen.ci <- ddply(sensep.res, .(type), function(res) c( quantile(res$sen, c(0.025, 0.5, 0.975)), quantile(res$spe, 0.5 ) ) )
 
-      plot(1-fit$sensep[,2], fit$sensep[,1], type = "s", xlab = "1 - Specificity", ylab = "Sensitivity")
-      lines(1 - sen.ci[,4], sen.ci[,2], lty = 2)
-      lines(1 - sen.ci[,4], sen.ci[,3], lty = 2)
+      plot(1 - sen.ci[,5], sen.ci[,3], type = "s", xlab = "1 - Specificity", ylab = "Sensitivity")
+      lines(1 - sen.ci[,5], sen.ci[,2], lty = 2, type = "s")
+      lines(1 - sen.ci[,5], sen.ci[,4], lty = 2, type = "s")
     }
   }
   print(metric)
