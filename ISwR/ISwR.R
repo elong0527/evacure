@@ -34,6 +34,7 @@ fit <- smcure1( Surv(melanom$days, melanom$status == 1) ~ sex1 + l.thick + ulc1,
                cureform = ~ sex1 + l.thick + ulc1, data = melanom, model = "ph",
                Var = T, em = "smcure"
 )
+printsmcure1(fit, Var = T)
 
 # Fitted values
 rbind( est = fit$beta, fit$beta_sd[-1, ])  # Cox part
