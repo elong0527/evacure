@@ -66,7 +66,10 @@ simu.coxph <- function(N, c.min, c.max, model, .beta, .gamma, share = T, var.smc
   )
 
   if(var.smcure == T){
-    res <- rbind(res,   cbind(fit$b_sd, fit$beta_sd, fit$eva_sd) )
+    b_sd0    <- apply(fit$b_boot, 2, function(x) c( mean = mean(x), sd = sd(x), quantile(x, c(0.025, 0.975))) )
+    beta_sd0 <- apply(fit$beta_boot, 2, function(x) c( mean = mean(x), sd = sd(x), quantile(x, c(0.025, 0.975))) )
+
+    res <- rbind(res,   cbind(b_sd0, beta_sd0, fit$eva_sd) )
 
     coef_var <- var(cbind(fit$beta_boot, fit$b_boot))
     res <- res
