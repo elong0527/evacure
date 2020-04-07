@@ -78,8 +78,8 @@ simu.cure <- function(N, c.min, c.max, model, .beta, .gamma, share = T, negative
   }else{
     failure <- H.inv( X %*% .beta + error.true )
   }
-  # censor  <- runif(N, min = c.min, max = c.max)
-  censor  <- rexp(N, rate = c.max)    # Exponential Censoring 
+  censor  <- runif(N, min = c.min, max = c.max)
+  # censor  <- rexp(N, rate = c.max)    # Exponential Censoring
   t.all     <- pmin(failure, censor)
   delta.all <- t.all == failure
 
