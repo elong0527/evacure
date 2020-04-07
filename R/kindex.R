@@ -5,11 +5,11 @@
 .fun <- function(x1,x2, model){  # Kernel Function
   diff <- x1 - x2
 
-  if( model == "PH") weight <- 1/(1+exp(diff))
-  if( model == "PO"){ weight <- (1 - exp(diff) + diff * exp(diff)) / (1 - exp(diff))^2
+  if( toupper(model) == "PH") weight <- 1/(1+exp(diff))
+  if( toupper(model) == "PO"){ weight <- (1 - exp(diff) + diff * exp(diff)) / (1 - exp(diff))^2
                       weight <- ifelse(is.nan(weight), 0.5, weight)
   }
-  if( model == "Normal") weight <- 1 - pnorm(diff/ sqrt(2) )
+  if( toupper(model) == "NORMAL") weight <- 1 - pnorm(diff/ sqrt(2) )
   (diff < 0) * weight + 0.5 * (diff == 0)
 }
 
