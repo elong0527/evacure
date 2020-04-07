@@ -2,6 +2,10 @@
 # Simulation for parametric Cox PH model
 #---------------------
 
+i.par <- commandArgs(T)
+i.par <- as.numeric(i.par)
+root.file <- paste0(i.par)
+
 #-----------------------------------
 library(devtools)
 
@@ -11,10 +15,10 @@ devtools::load_all()
 source("simu_data.R")       ## Simulate data
 source("simu.coxph.R") ## Run simulation with Cox PH model
 
-set.seed(1234)
-niter <- 1000            ## Number of simulation replication
+# set.seed(1234)
+niter <- 1            ## Number of simulation replication
 var.smcure = TRUE
-nboot = 3
+nboot = 200
 
 res1 = list()
 res2 = res3 = res1
@@ -43,6 +47,7 @@ for( iter in 1:niter){
 
 }
 
+save(res1, res2, res3, file = paste0(root.file,".Rdata") )
 
 #
 # library(purrr)
