@@ -65,9 +65,9 @@ simu.cure <- function(N, c.min, c.max, model, .beta, .gamma, share = T, negative
   # Error term
   error <- function(N, model, G.inv = NULL){
     unif <- runif(N)
-    if(model == "PH"){ error <- log(- log(unif)) }
-    if(model == "PO"){ error <- logit(unif)}
-    if(model == "Normal"){ error <- rnorm(N)}
+    if(toupper(model) == "PH"){ error <- log(- log(unif)) }
+    if(toupper(model) == "PO"){ error <- logit(unif)}
+    if(toupper(model) == "Normal"){ error <- rnorm(N)}
     if(! model %in% c("PH","PO","Normal") ){ error <- G.inv(unif)}
     error
   }

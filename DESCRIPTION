@@ -8,4 +8,4 @@ Depends:
 LazyData: true
 Imports:
     smcure,
-RoxygenNote: 5.0.1
+RoxygenNote: 6.1.1

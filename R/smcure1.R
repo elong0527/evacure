@@ -6,7 +6,7 @@
 #'
 #' @export
 smcure1 <-
-  function(formula,cureform,offset=NULL,data,na.action=na.omit,model= c("aft", "ph"),link="logit", Var=TRUE,emmax=50,eps=1e-7,nboot=100,
+  function(formula,cureform,offset=NULL,data,na.action=na.omit,model= c("aft", "ph"),link="logit", Var=TRUE,emmax=50,eps=1e-7,nboot=100, n_post = 100,
            init = NULL, em = "smcure1", cutpoint = c(0.1,0.25,0.5,0.75,0.9), eva_model = NULL)
   {
     # if(em == "smcure") {
@@ -17,11 +17,11 @@ smcure1 <-
 
     options(warn=-1)
 
-    if(model == "ph"){
+    if(toupper(model) == "PH"){
       eva_model = "PH"
     }
 
-    if(model == "aft" & is.null(eva_model) ){
+    if(toupper(model) == "AFT" & is.null(eva_model) ){
       stop("eva_model is required to calculate prognostic accuracy for AFT model")
     }
 
@@ -46,17 +46,17 @@ smcure1 <-
     Status <- Y[,2]
     bnm <- colnames(Z)
     nb <- ncol(Z)
-    if(model == "ph") {
+    if(toupper(model) == "PH") {
       betanm <- colnames(X)[-1]
       nbeta <- ncol(X)-1}
-    if(model == "aft"){
+    if(toupper(model) == "AFT"){
       betanm <- colnames(X)
       nbeta <- ncol(X)}
     ## initial value
     w <- Status
     b <- eval(parse(text = paste("glm", "(", "w~Z[,-1]",",family = quasibinomial(link='", link, "'",")",")",sep = "")))$coef
-    if(model=="ph") beta <- coxph(Surv(Time, Status)~X[,-1]+offset(log(w)), subset=w!=0, method="breslow")$coef
-    if(model=="aft") beta <- survreg(Surv(Time,Status)~X[,-1])$coef
+    if(toupper(model)=="PH") beta <- coxph(Surv(Time, Status)~X[,-1]+offset(log(w)), subset=w!=0, method="breslow")$coef
+    if(toupper(model)=="AFT") beta <- survreg(Surv(Time,Status)~X[,-1])$coef
     ## do EM algo
     if(! is.null(init)){
       w <- init$w
@@ -69,50 +69,62 @@ smcure1 <-
     s <- emfit$Survival
     logistfit <- emfit$logistfit
 
-    if(model == "ph"){
+    if(toupper(model) == "PH"){
       eva <- eva_cure(Time, Status, X[, -1], beta, Z, b, s, model = "PH")
       eva$sensep <- cutSenspe(eva$sensep, cutpoint )
       eva <- c(eva$metric, sen = eva$sensep[,1], sep = eva$sensep[,2])
+
+      eva_direct <- eva_cure_direct(Time, Status, X[,-1], beta, Z, b, s, model = "PH", cutpoint, n_post = n_post)
+
     }
-    if(model == "aft"){
+    if(toupper(model) == "AFT"){
       eva <- eva_cure(Time, Status, X, - beta, Z, b, s, model = eva_model)
       eva$sensep <- cutSenspe(eva$sensep, cutpoint )
       eva <- c(eva$metric, sen = eva$sensep[,1], sep = eva$sensep[,2])
+
+      eva_direct <- eva_cure_direct(Time, Status, X, - beta, Z, b, s, model = eva_model, cutpoint, n_post = n_post)
     }
 
     ## Bootstrap begin
     if(Var){
-      if(model=="ph") {b_boot<-matrix(rep(0,nboot*nb), nrow=nboot)
+      if(toupper(model)=="PH") {b_boot<-matrix(rep(0,nboot*nb), nrow=nboot)
                        beta_boot<-matrix(rep(0,nboot*(nbeta)), nrow=nboot)
                        iter <- matrix(rep(0,nboot),ncol=1)}
 
-      if(model=="aft") {b_boot<-matrix(rep(0,nboot*nb), nrow=nboot)
+      if(toupper(model)=="AFT") {b_boot<-matrix(rep(0,nboot*nb), nrow=nboot)
                         beta_boot<-matrix(rep(0,nboot*(nbeta)), nrow=nboot)}
       tempdata <- cbind(Time,Status,X,Z)
       data1<-subset(tempdata,Status==1);data0<-subset(tempdata,Status==0)
       n1<-nrow(data1);n0<-nrow(data0)
 
       eva.boot <- list()
+      eva.boot_direct <- list()
+      s_boot <- list()
       i<-1
       while (i<=nboot){
         id1<-sample(1:n1,n1,replace=TRUE);id0<-sample(1:n0,n0,replace=TRUE)
         bootdata<-rbind(data1[id1,],data0[id0,])
         bootZ <- bootdata[,bnm]
-        if(model=="ph") bootX <- as.matrix(cbind(rep(1,n),bootdata[,betanm]))
-        if(model=="aft") bootX <- bootdata[,betanm]
+        if(toupper(model)=="PH") bootX <- as.matrix(cbind(rep(1,n),bootdata[,betanm]))
+        if(toupper(model)=="AFT") bootX <- bootdata[,betanm]
         bootfit <- em(bootdata[,1],bootdata[,2],bootX,bootZ,offsetvar,b,beta,model,link,emmax,eps)
+        s_boot[[i]] <- bootfit$Survival
         b_boot[i,] <- bootfit$b
         beta_boot[i,] <- bootfit$latencyfit
 
-        if(model=="ph"){
+        if(toupper(model)=="PH"){
           eva.boot[[i]] <- eva_cure(bootdata[,1],bootdata[,2],bootX[,-1],bootfit$latencyfit,bootZ,bootfit$b, bootfit$Survival, model = "PH")
           eva.boot[[i]]$sensep <- eva.boot[[i]]$sensep
           eva.boot[[i]]$eva <- cutSenspe(eva.boot[[i]]$sensep, cutpoint )
+
+          eva.boot_direct[[i]] <- eva_cure_direct(time = bootdata[,1], bootdata[,2], bootX[,-1], beta = bootfit$latencyfit, bootZ, bootfit$b, bootfit$Survival, model = "PH", cutpoint, n_post = n_post)
         }
-        if(model=="aft"){
+        if(toupper(model)=="AFT"){
           eva.boot[[i]] <- eva_cure(bootdata[,1],bootdata[,2],bootX, - bootfit$latencyfit,bootZ,bootfit$b, bootfit$Survival, model = eva_model)
           eva.boot[[i]]$sensep <- eva.boot[[i]]$sensep
           eva.boot[[i]]$eva <- cutSenspe(eva.boot[[i]]$sensep, cutpoint )
+
+          eva.boot_direct[[i]] <- eva_cure_direct(time = bootdata[,1], bootdata[,2], bootX, beta = - bootfit$latencyfit, bootZ, bootfit$b, bootfit$Survival, model = eva_model, cutpoint, n_post = n_post)
         }
 
         if (bootfit$tau<eps) i<-i+1}
@@ -137,9 +149,10 @@ smcure1 <-
     fit$model <- model
     fit$status <- Status
 #     browser()
-    if(model == "ph"){fit$X <- X[, -1]}else { fit$X <- X }
+    if(toupper(model) == "PH"){fit$X <- X[, -1]}else { fit$X <- X }
     fit$X <- as.matrix(fit$X)
     fit$Z <- Z
+    fit$eva_direct <- eva_direct
 
     if(Var){
       fit$b_var <- b_var
@@ -154,6 +167,8 @@ smcure1 <-
       fit$beta_boot <- beta_boot
       fit$eva_sd <- eva_sd
       fit$eva.boot <- eva.boot
+      fit$s_boot   <- s_boot
+      fit$eva_boot_direct <- eva.boot_direct
     }
     cat(" done.\n")
     fit$call <- call
@@ -161,10 +176,10 @@ smcure1 <-
     fit$betanm <- betanm
     fit$s <- s
     fit$Time <- Time
-    if(model=="aft"){
+    if(toupper(model)=="AFT"){
       error <- drop(log(Time)-beta%*%t(X))
       fit$error <- error}
-    if(model == "ph"){
+    if(toupper(model) == "PH"){
       eva <- eva_smcure(fit, model = "PH")
       fit$metric <- eva$metric
       fit$sensep <- eva$sensep
@@ -211,7 +226,7 @@ eva_cure <- function(time,delta,X,beta,Z,b, surv, model, baseline = T){
   est.risk <- X %*% beta
   est.odds <- Z %*% b
   est.pi   <- logit.inv(est.odds)
-  if(model == "PH" & baseline == T){ est.surv <- surv ^ exp( est.risk) }else{ est.surv <- surv}
+  if(toupper(model) == "PH" & baseline == T){ est.surv <- surv ^ exp( est.risk) }else{ est.surv <- surv}
   est.w <- w.cure(est.pi, delta, est.surv)
 
   k1  <- k.ind(risk = est.risk, pi = est.pi, model)

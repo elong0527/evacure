@@ -1,16 +1,16 @@
 smsurv <- function (Time, Status, X, beta, w, model)
 {
   death_point <- sort(unique(subset(Time, Status == 1)))
-  if (model == "ph")
+  if (toupper(model) == "PH")
     coxexp <- exp((beta) %*% t(X[, -1]))
   lambda <- numeric()
   event <- numeric()
   for (i in 1:length(death_point)) {
     event[i] <- sum(Status * as.numeric(Time == death_point[i]))
-    if (model == "ph")
+    if (toupper(model) == "PH")
       temp <- sum(as.numeric(Time >= death_point[i]) *
                     w * drop(coxexp))
-    if (model == "aft")
+    if (toupper(model) == "AFT")
       temp <- sum(as.numeric(Time >= death_point[i]) *
                     w)
     temp1 <- event[i]
@@ -36,9 +36,9 @@ em <- function (Time, Status, X, Z, offsetvar, b, beta, model, link,
 {
   w <- Status
   n <- length(Status)
-  if (model == "ph")
+  if (toupper(model) == "PH")
     s <- smsurv(Time, Status, X, beta, w, model)$survival
-  if (model == "aft") {
+  if (toupper(model) == "AFT") {
     if (!is.null(offsetvar))
       Time <- Time/exp(offsetvar)
     error <- drop(log(Time) - beta %*% t(X))
@@ -49,10 +49,10 @@ em <- function (Time, Status, X, Z, offsetvar, b, beta, model, link,
   while (convergence > eps & i < emmax) {
     uncureprob <- matrix(exp((b) %*% t(Z))/(1 + exp((b) %*%
                                                       t(Z))), ncol = 1)
-    if (model == "ph") {
+    if (toupper(model) == "PH") {
       survival <- drop(s^(exp((beta) %*% t(X[, -1]))))
     }
-    if (model == "aft") {
+    if (toupper(model) == "AFT") {
       error <- drop(log(Time) - beta %*% t(X))
       survival <- s
     }
@@ -66,7 +66,7 @@ em <- function (Time, Status, X, Z, offsetvar, b, beta, model, link,
       update_cureb <- as.numeric(eval(parse(text = paste("glm",
                                                          "(", "w~Z[,-1]+offset(offsetvar)", ",family = quasibinomial(link='",
                                                          link, "'", ")", ")", sep = "")))$coef)
-    if (model == "ph") {
+    if (toupper(model) == "PH") {
       update_beta <- coxph(Surv(Time, Status) ~ X[, -1] +
                              offset(log(w)), subset = w != 0, method = "breslow")$coef
       if (!is.null(offsetvar))
@@ -75,7 +75,7 @@ em <- function (Time, Status, X, Z, offsetvar, b, beta, model, link,
                                0, method = "breslow")$coef
       update_s <- smsurv(Time, Status, X, beta, w, model)$survival
     }
-    if (model == "aft") {
+    if (toupper(model) == "AFT") {
       update_beta <- optim(rep(0, ncol(X)), smrank, Time = Time,
                            X = X, n = n, w = w, Status = Status, method = "Nelder-Mead",
                            control = list(reltol = 1e-04, maxit = 500))$par

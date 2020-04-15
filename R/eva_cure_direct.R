@@ -1,9 +1,14 @@
-eva_cure_direct <- function(time, delta, X, beta, Z, b, model, cutpoint, n_post = 500){
+#' Evaluate the direct estimator
+#'
+#' @export
+eva_cure_direct <- function(time, delta, X, beta, Z, b, surv, model, cutpoint, n_post = 500, baseline = TRUE){
   n <- length(time)
 
   est.risk <- X %*% beta
   est.odds <- Z %*% b
   est.pi   <- logit.inv(est.odds)
+  if(toupper(model) == "PH" & baseline == T){ est.surv <- surv ^ exp( est.risk) }else{ est.surv <- surv}
+  est.w <- w.cure(est.pi, delta, est.surv)
 
   .eva_cure_observed <- function(risk, odds, uncure, model, cutpoint){
 
@@ -23,7 +28,7 @@ eva_cure_direct <- function(time, delta, X, beta, Z, b, model, cutpoint, n_post 
   res_post <- list()
   for(i_post in 1:n_post){
 
-    y_imp    <- ifelse(delta == 1, 1, rbinom(n, size = 1, prob = est.pi)) # Uncure imputation
+    y_imp    <- ifelse(delta == 1, 1, rbinom(n, size = 1, prob = est.w)) # Uncure imputation
 
     .res <- .eva_cure_observed(est.risk, est.odds, uncure = y_imp, model = model, cutpoint = cutpoint)
     res_post[[i_post]] <- .res
