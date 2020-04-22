@@ -7,13 +7,14 @@
 #' @export
 smcure1 <-
   function(formula,cureform,offset=NULL,data,na.action=na.omit,model= c("aft", "ph"),link="logit", Var=TRUE,emmax=50,eps=1e-7,nboot=100, n_post = 100,
-           init = NULL, em = "smcure1", cutpoint = c(0.1,0.25,0.5,0.75,0.9), eva_model = NULL)
+           init = NULL, em = "smcure1", cutpoint = c(0.1,0.25,0.5,0.75,0.9), eva_model = NULL, est_type = "EM", posterior = TRUE)
   {
     # if(em == "smcure") {
     #   print("smcure:::em")
     #   em <- smcure:::em }else{
     #     print("revised em")
     #   }
+    stopifnot(est_type %in% c("EM", "EM-like"))
 
     options(warn=-1)
 
@@ -63,7 +64,7 @@ smcure1 <-
       b <- init$b
       beta <- init$beta
     }
-    emfit <- em(Time,Status,X,Z,offsetvar,b,beta,model,link,emmax,eps)
+    emfit <- em(Time,Status,X,Z,offsetvar,b,beta,model,link,emmax,eps, est_type = est_type)
     b <- emfit$b
     beta <- emfit$latencyfit
     s <- emfit$Survival
@@ -74,7 +75,7 @@ smcure1 <-
       eva$sensep <- cutSenspe(eva$sensep, cutpoint )
       eva <- c(eva$metric, sen = eva$sensep[,1], sep = eva$sensep[,2])
 
-      eva_direct <- eva_cure_direct(Time, Status, X[,-1], beta, Z, b, s, model = "PH", cutpoint, n_post = n_post)
+      eva_direct <- eva_cure_direct(Time, Status, X[,-1], beta, Z, b, s, model = "PH", cutpoint, n_post = n_post, posterior = posterior)
 
     }
     if(toupper(model) == "AFT"){
@@ -82,7 +83,7 @@ smcure1 <-
       eva$sensep <- cutSenspe(eva$sensep, cutpoint )
       eva <- c(eva$metric, sen = eva$sensep[,1], sep = eva$sensep[,2])
 
-      eva_direct <- eva_cure_direct(Time, Status, X, - beta, Z, b, s, model = eva_model, cutpoint, n_post = n_post)
+      eva_direct <- eva_cure_direct(Time, Status, X, - beta, Z, b, s, model = eva_model, cutpoint, n_post = n_post, posterior = posterior)
     }
 
     ## Bootstrap begin
@@ -117,14 +118,14 @@ smcure1 <-
           eva.boot[[i]]$sensep <- eva.boot[[i]]$sensep
           eva.boot[[i]]$eva <- cutSenspe(eva.boot[[i]]$sensep, cutpoint )
 
-          eva.boot_direct[[i]] <- eva_cure_direct(time = bootdata[,1], bootdata[,2], bootX[,-1], beta = bootfit$latencyfit, bootZ, bootfit$b, bootfit$Survival, model = "PH", cutpoint, n_post = n_post)
+          eva.boot_direct[[i]] <- eva_cure_direct(time = bootdata[,1], bootdata[,2], bootX[,-1], beta = bootfit$latencyfit, bootZ, bootfit$b, bootfit$Survival, model = "PH", cutpoint, n_post = n_post, posterior = posterior)
         }
         if(toupper(model)=="AFT"){
           eva.boot[[i]] <- eva_cure(bootdata[,1],bootdata[,2],bootX, - bootfit$latencyfit,bootZ,bootfit$b, bootfit$Survival, model = eva_model)
           eva.boot[[i]]$sensep <- eva.boot[[i]]$sensep
           eva.boot[[i]]$eva <- cutSenspe(eva.boot[[i]]$sensep, cutpoint )
 
-          eva.boot_direct[[i]] <- eva_cure_direct(time = bootdata[,1], bootdata[,2], bootX, beta = - bootfit$latencyfit, bootZ, bootfit$b, bootfit$Survival, model = eva_model, cutpoint, n_post = n_post)
+          eva.boot_direct[[i]] <- eva_cure_direct(time = bootdata[,1], bootdata[,2], bootX, beta = - bootfit$latencyfit, bootZ, bootfit$b, bootfit$Survival, model = eva_model, cutpoint, n_post = n_post, posterior = posterior)
         }
 
         if (bootfit$tau<eps) i<-i+1}
@@ -153,6 +154,7 @@ smcure1 <-
     fit$X <- as.matrix(fit$X)
     fit$Z <- Z
     fit$eva_direct <- eva_direct
+    fit$w <- emfit$w
 
     if(Var){
       fit$b_var <- b_var

@@ -32,16 +32,31 @@ simu.coxph <- function(N, c.min, c.max, model, .beta, .gamma, share = T, var.smc
   library(mvtnorm)
   # print(nboot)
   simu <- simu.cure(N, c.min, c.max, model, .beta, .gamma, share = share)
+  simu_test <- simu.cure(N, c.min, c.max, model, .beta, .gamma, share = share)
+
   data <- data.frame(simu$surv, X = simu$X, Z = simu$Z[,-1])
 
   fit <- smcure1( formula = Surv(t, delta) ~  X.1 + X.2 ,
                   cureform = ~  Z.1 + Z.2, model = fit_method,
                   data = data, Var = var.smcure, nboot = nboot, n_post = n_post, init = init, cutpoint = cutpoint)
 
+  fit_em_like <- smcure1( formula = Surv(t, delta) ~  X.1 + X.2 ,
+                          cureform = ~  Z.1 + Z.2, model = fit_method,
+                          data = data, Var = var.smcure, nboot = nboot, n_post = n_post, cutpoint = cutpoint,
+                          init = list(b = fit$b, beta = fit$beta, w = fit$w), est_type = "EM-like")
+
+  fit_b <- smcure1( formula = Surv(t, delta) ~  X.1 + X.2 ,
+                    cureform = ~  Z.1 + Z.2, model = fit_method,
+                    data = data, Var = var.smcure, nboot = nboot, n_post = n_post, init = init, cutpoint = cutpoint, posterior = FALSE)
+
+
   n_x <- ncol(fit$X)
   post_fit <- fit$eva_direct
   direct_est <- cbind(t(post_fit$metric), C = NA, sen = t(post_fit$senspe[,1]), spe = t(post_fit$senspe[,2]))
 
+  n_x <- ncol(fit_b$X)
+  post_fit <- fit_b$eva_direct
+  direct_est_b <- cbind(t(post_fit$metric), C = NA, sen = t(post_fit$senspe[,1]), spe = t(post_fit$senspe[,2]))
 
   if(var.smcure){
     b_boot    <- lapply(fit$eva.boot, function(x) x$para[-(1:n_x)])
@@ -57,18 +72,16 @@ simu.coxph <- function(N, c.min, c.max, model, .beta, .gamma, share = T, var.smc
     }
     direct_est_boot1 <- do.call(rbind, direct_est_boot1)
 
-    # # Use sample from normal distribution
-    # direct_est_boot2 <- list()
-    # for(i_boot in 1:nboot){
-    #
-    #   b_imp <- rmvnorm(1, b_imp_mean, b_imp_var)
-    #   beta_imp <- rmvnorm(1, beta_imp_mean, beta_imp_var)
-    #
-    #   .boot2 <- eva_cure_direct(time = data$t, data$delta, X, beta = beta_boot[[i_boot]], Z, b = b_boot[[i_boot]], model, cutpoint, n_post = n_post)
-    #   .direct_est2 <- cbind(t(.boot2$metric), C = NA, sen = t(.boot2$senspe[,1]), spe = t(.boot2$senspe[,2]))
-    #   direct_est_boot2[[i_boot]] <- c(b = b_boot[[i_boot]], beta = beta_boot[[i_boot]], .direct_est2)
-    # }
-    # direct_est_boot2 <- do.call(rbind, direct_est_boot2)
+    b_boot    <- lapply(fit_b$eva.boot, function(x) x$para[-(1:n_x)])
+    beta_boot <- lapply(fit_b$eva.boot, function(x) x$para[(1:n_x)])
+
+    direct_est_boot2 <- list()
+    for(i_boot in 1:nboot){
+      .boot2 <- fit_b$eva_boot_direct[[i_boot]]
+      .direct_est2 <- cbind(t(.boot2$metric), C = NA, sen = t(.boot2$senspe[,1]), spe = t(.boot2$senspe[,2]))
+      direct_est_boot2[[i_boot]] <- c(b = b_boot[[i_boot]], beta = beta_boot[[i_boot]], .direct_est2)
+    }
+    direct_est_boot2 <- do.call(rbind, direct_est_boot2)
 
 
   }
@@ -99,7 +112,9 @@ simu.coxph <- function(N, c.min, c.max, model, .beta, .gamma, share = T, var.smc
   res <- rbind(
   true = c(b = simu$gamma, beta = simu$beta, AUC = a01, K = k0, C = c0, sen = res01[,1], spe = res01[,2]),
   est  = c(fit$b, fit$beta, fit$eva),
-  direct = c(b = simu$gamma, beta = simu$beta, direct_est)
+  est_em_like = c(b = fit_em_like$b, fit_em_like$beta, fit_em_like$eva),
+  direct = c(b = simu$gamma, beta = simu$beta, direct_est),
+  direct_b = c(b = simu$gamma, beta = simu$beta, direct_est_b)
   )
 
   if(var.smcure == T){
@@ -107,18 +122,33 @@ simu.coxph <- function(N, c.min, c.max, model, .beta, .gamma, share = T, var.smc
     beta_sd0 <- apply(fit$beta_boot, 2, function(x) c( mean = mean(x), sd = sd(x), quantile(x, c(0.025, 0.975))) )
 
     boot1_res <- apply(direct_est_boot1, 2, function(x) c( boot1.mean = mean(x), boot1.sd = sd(x), boot1 = quantile(x, c(0.025, 0.975), na.rm = TRUE)) )
-    # boot2_res <- apply(direct_est_boot2, 2, function(x) c( boot2.mean = mean(x), boot2.sd = sd(x), boot2 = quantile(x, c(0.025, 0.975), na.rm = TRUE)) )
+    boot2_res <- apply(direct_est_boot2, 2, function(x) c( boot2.mean = mean(x), boot2.sd = sd(x), boot2 = quantile(x, c(0.025, 0.975), na.rm = TRUE)) )
 
-    res <- rbind(res,
+    res_sd <- rbind(
                  cbind(b_sd0, beta_sd0, fit$eva_sd),
-                 boot1_res)
+                 boot1_res,
+                 boot2_res)
 
-    coef_var <- var(cbind(fit$beta_boot, fit$b_boot))
-    res <- res
-    #   res <- round(res, 2)
   }
 
+  # Evaluation at test dataset
+  eva_test <- eva_cure(time = simu_test$surv[,1], delta = simu_test$surv[,2], X = simu_test$X,beta = fit$beta,
+                       Z = simu_test$Z, b = fit$b, surv = fit$s, model = "PH", baseline = T)
+  eva_test$sensep <- cutSenspe(eva_test$sensep, cutpoint )
+  test_est <- c(eva_test$metric, sen = eva_test$sensep[,1], sep = eva_test$sensep[,2])
 
-  list(res = res, info = simu$info)
+  eva_direct_test <- eva_cure_direct(time = simu_test$surv[,1], delta = simu_test$surv[,2], X = simu_test$X,beta = fit$beta,
+                              Z = simu_test$Z, b = fit$b, surv = fit$s, model = "PH", baseline = T, cutpoint = cutpoint)
+  test_direct <- cbind(t(eva_direct_test$metric), C = NA, sen = t(eva_direct_test$senspe[,1]), spe = t(eva_direct_test$senspe[,2]))
+
+  eva_direct_test_b <- eva_cure_direct(time = simu_test$surv[,1], delta = simu_test$surv[,2], X = simu_test$X,beta = fit$beta,
+                                     Z = simu_test$Z, b = fit$b, surv = fit$s, model = "PH", baseline = T, cutpoint = cutpoint, posterior = FALSE)
+  test_direct_b <- cbind(t(eva_direct_test_b$metric), C = NA, sen = t(eva_direct_test_b$senspe[,1]), spe = t(eva_direct_test_b$senspe[,2]))
+
+
+  res_test <-rbind(test_est = test_est, test_direct = test_direct, test_direct_b = test_direct_b)
+  rownames(res_test) <- c("test_est", "test_direct", "test_direct_b")
+
+  list(res = res, info = simu$info, res_test = res_test, res_sd = res_sd)
 }
 

@@ -32,7 +32,7 @@ smsurv <- function (Time, Status, X, beta, w, model)
 }
 
 em <- function (Time, Status, X, Z, offsetvar, b, beta, model, link,
-                emmax, eps)
+                emmax, eps, est_type = "EM")
 {
   w <- Status
   n <- length(Status)
@@ -58,9 +58,21 @@ em <- function (Time, Status, X, Z, offsetvar, b, beta, model, link,
     }
     w <- Status + (1 - Status) * (uncureprob * survival)/((1 -
                                                              uncureprob) + uncureprob * survival)
-    logistfit <- eval(parse(text = paste("glm", "(", "w~Z[,-1]",
+
+    if(est_type == "EM"){
+      logistfit <- eval(parse(text = paste("glm", "(", "w~Z[,-1]",
                                          ",family = quasibinomial(link='", link, "'", ")",
                                          ")", sep = "")))
+    }
+
+    if(est_type == "EM-like"){
+      y_imp <- ifelse(Status == 1, Status, rbinom(n, size = 1, prob = w)) # Uncure imputation
+      logistfit <- eval(parse(text = paste("glm", "(", "y_imp~Z[,-1]",
+                                           ",family = quasibinomial(link='", link, "'", ")",
+                                           ")", sep = "")))
+    }
+
+
     update_cureb <- logistfit$coef
     if (!is.null(offsetvar))
       update_cureb <- as.numeric(eval(parse(text = paste("glm",
@@ -91,5 +103,5 @@ em <- function (Time, Status, X, Z, offsetvar, b, beta, model, link,
     i <- i + 1
   }
   em <- list(logistfit = logistfit, b = b, latencyfit = beta,
-             Survival = s, Uncureprob = uncureprob, tau = convergence)
+             Survival = s, Uncureprob = uncureprob, tau = convergence, w = w)
 }
