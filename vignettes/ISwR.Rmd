@@ -18,8 +18,8 @@ knitr::opts_chunk$set(
 library(ISwR)     # Get melanoma dataset
 library(survival)
 library(ROCR)
-# library(evacure)
-devtools::load_all()
+library(evacure)
+# devtools::load_all()
 ```
 
 
