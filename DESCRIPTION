@@ -14,5 +14,6 @@ Suggests:
     rmarkdown,
     ISwR,
     ROCR,
-    survival
+    survival,
+    plyr
 VignetteBuilder: knitr
