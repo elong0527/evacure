@@ -58,6 +58,13 @@ simu.coxph <- function(N, c.min, c.max, model, .beta, .gamma, share = T, var.smc
   post_fit <- fit_b$eva_direct
   direct_est_b <- cbind(t(post_fit$metric), C = NA, sen = t(post_fit$senspe[,1]), spe = t(post_fit$senspe[,2]))
 
+  auc_1 <- performance( prediction(fit$Z %*% fit$b, 1 - data$cure ), measure = "auc")@y.values[[1]]
+  sen_1 <- performance( prediction(fit$Z %*% fit$b, 1 - data$cure ),  "sens" )
+  spe_1 <- performance( prediction(fit$Z %*% fit$b, 1 - data$cure ),  "spec" )
+  res_1 <- cbind(sen = sen_1@y.values[[1]], spe = spe_1@y.values[[1]], cut = spe_1@x.values[[1]])
+  res_1 <- cutSenspe(res_1, cutpoint )
+  oracle = c(b = simu$gamma, beta = simu$beta, AUC = auc_1, K = NA, C = NA, sen = res_1[,1], spe = res_1[,2])
+
   if(var.smcure){
     b_boot    <- lapply(fit$eva.boot, function(x) x$para[-(1:n_x)])
     beta_boot <- lapply(fit$eva.boot, function(x) x$para[(1:n_x)])
@@ -111,6 +118,7 @@ simu.coxph <- function(N, c.min, c.max, model, .beta, .gamma, share = T, var.smc
 
   res <- rbind(
   true = c(b = simu$gamma, beta = simu$beta, AUC = a01, K = k0, C = c0, sen = res01[,1], spe = res01[,2]),
+  oracle = oracle,
   est  = c(fit$b, fit$beta, fit$eva),
   est_em_like = c(b = fit_em_like$b, fit_em_like$beta, fit_em_like$eva),
   direct = c(b = simu$gamma, beta = simu$beta, direct_est),

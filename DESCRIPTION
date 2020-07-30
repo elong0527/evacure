@@ -9,3 +9,7 @@ LazyData: true
 Imports:
     smcure,
 RoxygenNote: 6.1.1
+Suggests: 
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr

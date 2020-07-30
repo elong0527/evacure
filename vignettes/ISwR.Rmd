@@ -1,0 +1,72 @@
+---
+title: "ISwR"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{ISwR}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(ISwR)     # Get melanoma dataset
+library(survival)
+library(ROCR)
+# library(evacure)
+devtools::load_all()
+```
+
+
+```{r}
+# Transfer covariates
+data(melanom)
+melanom$year <- melanom$days / 365.25
+melanom$l.thick <- log(melanom$thick)
+melanom$sex1    <- melanom$sex == 2 #( 1 = male)
+melanom$ulc1     <- melanom$ulc == 1 #( 1 = present)
+
+median(melanom$year) # median survival time
+1 - sum(melanom$status == 1) / nrow(melanom) # Censoring proportion
+```
+
+# Kaplan-Meier Curve
+```{r}
+# Ulceration
+a <- survfit(Surv(melanom$days/365.25, melanom$status == 1) ~ ulc, data = melanom)
+plot(a, ylab = "Survival Probability", xlab = "Year", lty = c(2,1), mark.time = T)
+legend("bottomleft", lty = c(1,2), legend = c("No","Yes"))
+```
+
+```{r}
+# Tumor thickness
+b <- survfit(Surv(melanom$days/365.25, melanom$status == 1) ~ I(l.thick > median(l.thick) ) , data = melanom)
+plot(b, ylab = "Survival Probability", xlab = "Year", lty = c(2,1), mark.time = T)
+legend("bottomleft", lty = c(1,2), legend = c("Above Median","Below Median"))
+```
+
+# CoxPH cure model with K-index
+```{r}
+fit <- smcure1( Surv(melanom$days, melanom$status == 1) ~ sex1 + l.thick + ulc1,
+               cureform = ~ sex1 + l.thick + ulc1, data = melanom, model = "ph",
+               Var = T, em = "smcure"
+)
+printsmcure1(fit, Var = T)
+```
+
+# Cox model with K-index
+```{r}
+fit1 <- coxph(Surv(melanom$days, melanom$status == 1) ~ sex1 + l.thick + ulc1, data = melanom, x = TRUE)
+risk <- predict(fit1, type = "risk")   # risk from Cox PH model
+pi <- rep(1, nrow(melanom) )           # set cure probablity always be 1
+
+
+k.ind(risk = risk, pi = rep(1, nrow(melanom) ), model = "PH") # K-index 
+```
+
+

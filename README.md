@@ -3,7 +3,7 @@ evacure
 
 An R package for evaluating prognostic accuracy for mixture cure models.
 
-## Installation ##
+## Installation
 
 From an interactive R session:
 
@@ -13,11 +13,11 @@ install_github("elong0527/evacure")
 library(evacure)
 ```
 
-## Real Example ##
+# Real Data Example
 
-The real example R code is located at `ISwR/ISwR.R`
+The real data example can be found in [here]()
 
-## Simulation Example ##
+# Simulation Example 
 
-A simulation example R code is located at `simulation/run_simu.R`
+R code for a simulation example located at `simulation/run_simu.R`
 
