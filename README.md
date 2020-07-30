@@ -14,5 +14,5 @@ library(evacure)
 ```
 
 * [Package website](https://elong0527.github.io/evacure/)
-* [Real data example](https://github.com/elong0527/evacure)
+* [Real data example](https://github.com/elong0527/evacure )
 * [Simulation example](https://github.com/elong0527/evacure/tree/master/simulation)
