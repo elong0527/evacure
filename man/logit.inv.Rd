@@ -9,4 +9,3 @@ logit.inv(x)
 \description{
 Inverse logit transformation
 }
-

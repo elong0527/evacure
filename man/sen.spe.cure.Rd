@@ -22,4 +22,3 @@ sen.spe.cure(odds, risk, surv, delta, cut.point = NULL, verbose = T)
 \description{
 Sensitivity and Specificity for mixture cure models
 }
-

@@ -16,4 +16,3 @@ G_est(F_est, r, u = seq(-10, 10, length = 2000))
 \description{
 Estimate the kernel function G
 }
-

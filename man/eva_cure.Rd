@@ -26,4 +26,3 @@ eva_cure(time, delta, X, beta, Z, b, surv, model, baseline = T)
 \description{
 Evaluate Mixture cure model fitted by smcure
 }
-

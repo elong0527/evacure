@@ -16,4 +16,3 @@ k.ind.est(risk, pi, F_est)
 \description{
 K-index estimation (aft model)
 }
-

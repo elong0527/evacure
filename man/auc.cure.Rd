@@ -18,4 +18,3 @@ auc.cure(odds, risk, surv, delta)
 \description{
 AUC for mixture cure models
 }
-

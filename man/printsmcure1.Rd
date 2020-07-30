@@ -9,4 +9,3 @@ printsmcure1(x, Var = TRUE, ROC = TRUE, ...)
 \description{
 Refer printsmcure() for detail information
 }
-

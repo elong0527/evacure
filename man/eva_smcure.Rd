@@ -14,4 +14,3 @@ eva_smcure(fit, model)
 \description{
 Evaluate Mixture cure model fitted by smcure
 }
-

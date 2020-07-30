@@ -13,11 +13,6 @@ install_github("elong0527/evacure")
 library(evacure)
 ```
 
-# Real Data Example
-
-The real data example can be found in [here]()
-
-# Simulation Example 
-
-R code for a simulation example located at `simulation/run_simu.R`
-
+* [Package website](https://elong0527.github.io/evacure/)
+* [Real data example](https://github.com/elong0527/evacure)
+* [Simulation example](https://github.com/elong0527/evacure/tree/master/simulation)

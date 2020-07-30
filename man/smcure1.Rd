@@ -4,14 +4,29 @@
 \alias{smcure1}
 \title{Semiparametric mixture cure model}
 \usage{
-smcure1(formula, cureform, offset = NULL, data, na.action = na.omit,
-  model = c("aft", "ph"), link = "logit", Var = TRUE, emmax = 50,
-  eps = 1e-07, nboot = 100, init = NULL, em = "smcure1",
-  cutpoint = c(0.1, 0.25, 0.5, 0.75, 0.9), eva_model = NULL)
+smcure1(
+  formula,
+  cureform,
+  offset = NULL,
+  data,
+  na.action = na.omit,
+  model = c("aft", "ph"),
+  link = "logit",
+  Var = TRUE,
+  emmax = 50,
+  eps = 1e-07,
+  nboot = 100,
+  n_post = 100,
+  init = NULL,
+  em = "smcure1",
+  cutpoint = c(0.1, 0.25, 0.5, 0.75, 0.9),
+  eva_model = NULL,
+  est_type = "EM",
+  posterior = TRUE
+)
 }
 \description{
 The function is same as smcure:::smcure
 that fit a mxture cure models. This one output information for bootstrap
 samples. See options in smcure for the detail.
 }
-

@@ -8,7 +8,7 @@ Depends:
 LazyData: true
 Imports:
     smcure,
-RoxygenNote: 6.1.1
+RoxygenNote: 7.1.0
 Suggests: 
     knitr,
     rmarkdown,

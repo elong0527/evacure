@@ -16,4 +16,3 @@ w.cure(pi, delta, surv)
 \description{
 Posterior of uncure probabilty
 }
-

@@ -32,4 +32,3 @@ survConcordance(Surv(stop, event) ~ risk, bladder)
 pi <- rep(1,fit$n)
 c.index(risk, pi, bladder$stop, bladder$event)
 }
-

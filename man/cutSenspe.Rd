@@ -14,4 +14,3 @@ cutSenspe(res, cut.point)
 \description{
 Sensitivity and specificity for a cut point
 }
-

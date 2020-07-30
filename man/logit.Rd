@@ -9,4 +9,3 @@ logit(x)
 \description{
 Logit transformation
 }
-

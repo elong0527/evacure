@@ -16,4 +16,3 @@ k.ind(risk, pi, model)
 \description{
 K-index estimation
 }
-
