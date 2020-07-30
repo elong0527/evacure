@@ -13,6 +13,6 @@ install_github("elong0527/evacure")
 library(evacure)
 ```
 
-* [Package website](https://elong0527.github.io/evacure/)
-* [Real data example](https://github.com/elong0527/evacure )
+* [Package website](https://github.com/elong0527/evacure)
+* [Real data example](https://github.com/elong0527/evacure/blob/master/vignettes/ISwR.Rmd)
 * [Simulation example](https://github.com/elong0527/evacure/tree/master/simulation)
