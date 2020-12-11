@@ -25,6 +25,7 @@ eva_cure_direct <- function(time, delta, X, beta, Z, b, surv, model, cutpoint, n
          senspe = res1)
   }
 
+  # Draw samples for imputation
   res_post <- list()
   for(i_post in 1:n_post){
 

@@ -4,17 +4,17 @@
 
 task_id <- as.integer(Sys.getenv("SGE_TASK_ID"))
 
-# Set up Simulation Enviroment
+# Set up Simulation Environment
 
 # task_id <- 1
-set.seed(task_id)
+set.seed(task_id * 5)
 
 #-----------------------------------
 library(devtools)
-library(evacure)
+# library(evacure)
 #-----------------------------------
 
-# devtools::load_all()
+devtools::load_all()
 source("simu_data.R")       ## Simulate data
 source("simu.coxph.R") ## Run simulation with Cox PH model
 
